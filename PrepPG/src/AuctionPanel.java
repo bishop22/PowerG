@@ -4,6 +4,7 @@ import java.awt.GridBagLayout;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
 import javax.swing.AbstractButton;
@@ -190,6 +191,7 @@ public class AuctionPanel extends JPanel {
 			}
 		}
 		JButton endAuctionButton = new JButton("End Auction");
+		endAuctionButton.setMnemonic(KeyEvent.VK_E);
 		endAuctionButton.addActionListener(endListener);
 		c.gridy = 11;
 		cp.add(endAuctionButton, c);

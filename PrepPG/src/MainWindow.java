@@ -346,6 +346,7 @@ public class MainWindow extends JPanel {
 		
 		// Show the player order
 		JButton playerStatusButton = new JButton("Order");
+		playerStatusButton.setMnemonic(KeyEvent.VK_O);
 		playerStatusButton.addActionListener(statusListener);
 	    c.gridx = 5;
 	    c.gridy = 0;
@@ -363,6 +364,7 @@ public class MainWindow extends JPanel {
 	    // Set up end turn button and instruction text area
 	    c.gridx++;
 		JButton endTurnButton = new JButton("End Turn");
+		endTurnButton.setMnemonic(KeyEvent.VK_T);
 		endTurnButton.setFont(new Font("Arial", Font.PLAIN, 10));
 		endTurnButton.addActionListener(endTurnListener);
 		cp.add(endTurnButton, c);
@@ -1018,15 +1020,23 @@ public class MainWindow extends JPanel {
 			doneBuilding = false;
 			while (doneBuilding == false) {
 				cityPair = CurPlayer.getLowestCostConnection();
-				if (cityPair.get(0) != null) {
+				if (cityPair.get(0) != null & cityPair.get(1) != null) {
+					System.out.print("Player " + CurPlayer.getColor() + " found lowest cost connection from " +
+							cityPair.get(0).getName() + " to " + cityPair.get(1).getName() + "\n");
 					int cityCost = 0;
 					// TODO: Null pointer exception on this next line - how can cityPair.get(1) be null?
 					try {
 					cityCost = cityPair.get(1).getCurrentCost();
 					} catch (NullPointerException e) {
 			            System.out.print("Caught the NullPointerException; cityPair.get(0) is " + cityPair.get(0).getName() + "\n");
-			            System.out.print("Caught the NullPointerException; cityPair.get(1) must be null\n");
-			            System.out.print("Caught the NullPointerException; cityPair.get(1) is " + cityPair.get(0).getName() + "\n");
+			            System.out.print("Players cities and connections were as follows:\n");
+			            for (int i = 0; i < CurPlayer.getMyCities().size(); i++) {
+			            	System.out.print(CurPlayer.getMyCities().get(i).getName() + ": ");
+			            	for (int j = 0; j < CurPlayer.getMyCities().get(i).getConnections().size(); j++) {
+			            		System.out.print(CurPlayer.getMyCities().get(i).getConnections().get(j).getName() + ", ");
+			            	}
+			            	System.out.print("\n");
+			            }
 					}
 					int connCost = cityPair.get(0).getCostOfConnection(cityPair.get(1));
 					if (CurPlayer.getElectroCount() > (cityCost + connCost)) {
@@ -1038,6 +1048,7 @@ public class MainWindow extends JPanel {
 						} else if (cityCost == 20) {
 							buttonNo = 2;
 						} else {
+							System.out.print("Somehow the button to push for purchase could not be found\n");
 							buttonNo = -1;		// Should never get to this line, but just in case
 						}
 						if (buttonNo < 0) {
@@ -1056,6 +1067,7 @@ public class MainWindow extends JPanel {
 						doneBuilding = true;	// Can't afford any more cities so moving on
 					}
 				} else {
+					System.out.print("No available connection was found for " + CurPlayer.getColor());
 					doneBuilding = true;	// No available connection was found
 					break;
 				}

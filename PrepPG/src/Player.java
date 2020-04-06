@@ -4,6 +4,7 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
@@ -96,6 +97,7 @@ public class Player implements Comparable<Player>{
 		payMeButton = new JButton("PayMe");
 		payMeButton.setPreferredSize(new Dimension(50, 30));
 		payMeButton.addActionListener(payMeListener);
+		payMeButton.setMnemonic(KeyEvent.VK_P);
 		dictionary = new HashMap<String, Integer>();
 		dictionary.put("Coal", 0);
 		dictionary.put("Oil", 1);
@@ -286,7 +288,7 @@ public class Player implements Comparable<Player>{
 	 */
 	public ArrayList<City> getLowestCostConnection() {
 		// TODO: Should allow for multiple connections having the same cost and randomly choosing
-		City curOriginCity, originCity = null, destCity = null;
+		City curOriginCity, originCity = null, curDestCity, destCity = null;
 		ArrayList<City> retVal = new ArrayList<City>();
 		int lowestCost = 999, curConnCost, curCityCost;
 		
@@ -297,15 +299,13 @@ public class Player implements Comparable<Player>{
 			for (int j = 0; j < curOriginCity.getConnections().size(); j++) {
 				if (curOriginCity.getConnections().get(j).isAvailable()) {
 					boolean alreadyInCity = false;
-					destCity = curOriginCity.getConnections().get(j);
+					curDestCity = curOriginCity.getConnections().get(j);
 					for (int k = 0; k < 3; k++) {
-						// TODO: Find null pointer exception on the next line
 						try {
-						if (destCity.getButton(k).getBackground() == paintColor) {
-							alreadyInCity = true;
-							destCity = null;
-							break;
-						}
+							if (curDestCity.getButton(k).getBackground() == paintColor) {
+								alreadyInCity = true;
+								// destCity = null;
+							}
 						} catch (NullPointerException e) {
 				            System.out.print("Caught the NullPointerException; k is " + k + " and j is " + j + "\n");
 				            System.out.print("Current origin city is " + curOriginCity.getName() + "\n");
@@ -319,11 +319,11 @@ public class Player implements Comparable<Player>{
 					if (!alreadyInCity) {
 						curConnCost = curOriginCity.getConnectionCosts().get(j);
 						curCityCost = curOriginCity.getConnections().get(j).getCurrentCost();
-						if (curCityCost > 0) {
+						if (curCityCost >= 0) {
 							if (curConnCost + curCityCost < lowestCost) {
 								lowestCost = curConnCost + curCityCost;
 								originCity = curOriginCity;
-								destCity = curOriginCity.getConnections().get(j);
+								destCity = curDestCity;
 							}
 						}
 					}
@@ -740,6 +740,11 @@ public class Player implements Comparable<Player>{
 			cp.add(lblBotBldRule);
 			cp.add(txtBotBldRule);
 		}
+		// Add the close button
+		JButton closeButton = new JButton("Close");
+		closeButton.addActionListener(closeListener);
+		closeButton.setMnemonic(KeyEvent.VK_C);
+		cp.add(closeButton);
 	}
 
 	public void selectPPs() {
@@ -778,7 +783,17 @@ public class Player implements Comparable<Player>{
 	public void closeWindow() {
 		myFrame.dispose();
 	}
-	
+
+	// Action listener for the close button
+	ActionListener closeListener = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (e.getSource() instanceof JButton) {
+            	closeWindow();
+            }
+        }
+	};
+
 	// Create an ActionListener for completing the selection of Power Plants
 	// This routine needs to confirm there are enough resources to power the selected plants before 
 	// moving on to pay the player for the powered cities
