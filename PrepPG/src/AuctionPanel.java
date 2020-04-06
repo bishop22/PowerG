@@ -25,6 +25,7 @@ public class AuctionPanel extends JPanel {
 	private GridBagConstraints c;
 	private PowerPlant auctionPP;
 	private MainWindow gameControl;
+	private JPanel panel;
 	private JTextField currentBid;
 	private JTextField bidColor;
 
@@ -54,6 +55,7 @@ public class AuctionPanel extends JPanel {
 		// TODO Auto-generated constructor stub
 		auctionPP = AuctionPP;
 		gameControl = GameControl;
+		panel = gameControl.getPanel();
 		
 		//Create a scrollbar using JScrollPane and add panel into it's viewport  
 		//Set vertical and horizontal scrollbar always show  
@@ -207,7 +209,7 @@ public class AuctionPanel extends JPanel {
 			bidColor.setText(Bidder);
 		} else {
 			// Message that they can't afford to bid
-    		JOptionPane.showMessageDialog(gameControl,
+    		JOptionPane.showMessageDialog(panel,
     			    bidColor + "Can't afford to increase bid to " + (curBidAmt+1));
 		}
 	}

@@ -15,8 +15,8 @@ import java.util.Random;
  * @author Michael Lyons
  *
  */
-//public class MainWindow extends JFrame {
-public class MainWindow extends JPanel {
+//public class MainWindow extends JPanel {
+public class MainWindow {
 	// Required parameter
 	private static final long serialVersionUID = 88L;
 	
@@ -41,6 +41,7 @@ public class MainWindow extends JPanel {
 	// These fields will be moved to the City class, which will be held be an array of Regions in the MainWindow
 	private Container cp;
 	private JFrame gameFrame;							// JFrame that represents the main window for the game
+	private JPanel panel;								// JPanel which will contain the content (try to mix UI components and graphics)
 	private City cities[];								// Array of City objects on the map being used (US only for now)
 	private ArrayList<CityConnector> connectors;		// ArrayList holding all connections between cities
 //	private ArrayList<Integer> connectionCosts;			// ArrayList holding cost of all connections between cities
@@ -64,11 +65,21 @@ public class MainWindow extends JPanel {
 
 	
 	public MainWindow() {
+		JPanel panel = new JPanel();
+
 		gameFrame = new JFrame();
 //		gameFrame = GameFrame;
+		
+		//Create a scrollbar using JScrollPane and add panel into it's viewport  
+		//Set vertical and horizontal scrollbar always show  
+		JScrollPane scrollBar=new JScrollPane(panel,JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);  
+
+		//Add JScrollPane into JFrame  
+		gameFrame.add(scrollBar);  
+		
 		// Retrieve the top-level content-pane from JFrame
-	    cp = gameFrame.getContentPane();
-//		cp = this;
+//	    cp = gameFrame.getContentPane();
+		cp = panel;
 		
 	    // Content-pane sets layout
 	    cp.setLayout(new GridBagLayout());
@@ -122,6 +133,10 @@ public class MainWindow extends JPanel {
 
     public Container getContentPane() {
     	return cp;
+    }
+    
+    public JPanel getPanel() {
+    	return panel;
     }
     
 	private void setupDeck() {
@@ -1021,8 +1036,6 @@ public class MainWindow extends JPanel {
 			while (doneBuilding == false) {
 				cityPair = CurPlayer.getLowestCostConnection();
 				if (cityPair.get(0) != null & cityPair.get(1) != null) {
-					System.out.print("Player " + CurPlayer.getColor() + " found lowest cost connection from " +
-							cityPair.get(0).getName() + " to " + cityPair.get(1).getName() + "\n");
 					int cityCost = 0;
 					// TODO: Null pointer exception on this next line - how can cityPair.get(1) be null?
 					try {
@@ -1067,7 +1080,6 @@ public class MainWindow extends JPanel {
 						doneBuilding = true;	// Can't afford any more cities so moving on
 					}
 				} else {
-					System.out.print("No available connection was found for " + CurPlayer.getColor());
 					doneBuilding = true;	// No available connection was found
 					break;
 				}
@@ -1093,7 +1105,7 @@ public class MainWindow extends JPanel {
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				JPanel gamePanel =  new MainWindow(); // Let the constructor do the job
+				MainWindow gamePanel =  new MainWindow(); // Let the constructor do the job
 
 /*
 				JFrame gameFrame = new JFrame();

@@ -35,6 +35,7 @@ public class Player implements Comparable<Player>{
 	private Random random;
 	private int firstCityBotRule, auctionBotRule, resourceBotRule, buildBotRule;
 	private MainWindow gameControl;
+	private JPanel panel;
 	private boolean bidEligible;				// This is to keep track of who is still eligible to bid on PPs (set true at start of phase 2; set false if pass)
 	private boolean paidInd;					// This is to keep track of whether I have been paid in Phase 5 of each turn
 	private ArrayList<PowerPlant> myPlants;
@@ -79,6 +80,7 @@ public class Player implements Comparable<Player>{
 			determineBotRules();
 		}
 		gameControl = GameControl;
+		panel = gameControl.getPanel();
 		electroCount = ELECTRO_START;
 		bidEligible = true;
 		paidInd = false;
@@ -273,7 +275,7 @@ public class Player implements Comparable<Player>{
 		for (int i = 0; i < ExclusionList.size(); i++) {
 			inputList += ExclusionList.get(i).getMinBid() + " ";
 		}
-		JOptionPane.showMessageDialog(gameControl,
+		JOptionPane.showMessageDialog(panel,
 			    "Warning: getPPexcept() is about to return null, which should not happen.  Input PPs were " + inputList);
 		return null;
 	}
@@ -820,19 +822,19 @@ public class Player implements Comparable<Player>{
             	}
             	if (coalInv < reqResources[dictionary.get("Coal")]) {
         			// Dialog box that the player does not have enough coal
-            		JOptionPane.showMessageDialog(gameControl,
+            		JOptionPane.showMessageDialog(panel,
             			    "Can't power selected plants: required coal is " + reqResources[dictionary.get("Coal")] + "; inventory is " + coalInv);
             		return;
             	}
             	if (oilInv < reqResources[dictionary.get("Oil")]) {
         			// Dialog box that the player does not have enough oil
-            		JOptionPane.showMessageDialog(gameControl,
+            		JOptionPane.showMessageDialog(panel,
             			    "Can't power selected plants: required oil is " + reqResources[dictionary.get("Oil")] + "; inventory is " + oilInv);
             		return;
             	}
             	if (coalInv + oilInv < (reqResources[dictionary.get("Hybrid")] + reqResources[dictionary.get("Coal")] + reqResources[dictionary.get("Oil")])) {
         			// Dialog box that the player does not have enough coal and oil
-            		JOptionPane.showMessageDialog(gameControl,
+            		JOptionPane.showMessageDialog(panel,
             			    "Can't power selected plants: required coal is " + reqResources[dictionary.get("Coal")] +
             			    "oil is " + reqResources[dictionary.get("Oil")] + 
             			    "hybrid is " + reqResources[dictionary.get("Hybrid")] + "; total inventory is " + (coalInv + oilInv));
@@ -840,13 +842,13 @@ public class Player implements Comparable<Player>{
             	}
             	if (garbageInv < reqResources[dictionary.get("Garbage")]) {
         			// Dialog box that the player does not have enough garbage
-            		JOptionPane.showMessageDialog(gameControl,
+            		JOptionPane.showMessageDialog(panel,
             			    "Can't power selected plants: required garbage is " + reqResources[dictionary.get("Garbage")] + "; inventory is " + garbageInv);
             		return;
             	}
             	if (uraniumInv < reqResources[dictionary.get("Uranium")]) {
         			// Dialog box that the player does not have enough uranium
-            		JOptionPane.showMessageDialog(gameControl,
+            		JOptionPane.showMessageDialog(panel,
             			    "Can't power selected plants: required uranium is " + reqResources[dictionary.get("Uranium")] + "; inventory is " + uraniumInv);
             		return;
             	}
