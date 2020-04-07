@@ -17,9 +17,6 @@ import java.util.Random;
  */
 //public class MainWindow extends JPanel {
 public class MainWindow {
-	// Required parameter
-	private static final long serialVersionUID = 88L;
-	
 	// Constants (some will be configurable when add game options for # of players, or expansion pack rules)
 	public static final int PLAYER_COUNT = 6;			// Number of players in the game
 	private static final int CITY_COUNT = 42;			// Max number of cities on the map
@@ -29,6 +26,7 @@ public class MainWindow {
 	private static final int CITY_TRIGGER_STEP2 = 7;	// Number of cities to trigger Step 2 (actually depends on # of players)
 	private static final int STEP3_CARD_NO = -1;		// Watch for this PP # to pop up from the deck to trigger Step 3
 	private static final int CITY_TRIGGER_END = 14;		// Number of cities to trigger end of game (actually depends on # of players)
+	private static final int EXCL_REGN_CNT = 1;			// Number of regions to exclude (defaults to 1 for six players)
 	private static final int PP_MARKET_ORIGIN_X = 19;	// Constants to control placement of Power Plant Market on game board
 	private static final int PP_MARKET_ORIGIN_Y = 0;
 	private static final int PP_MARKET_SIZE = 8;		// Max number of PPs shown in Market at one time
@@ -61,11 +59,34 @@ public class MainWindow {
 	private JButton ppMkt[];
 	private JTextField resourceType[], resourceAmount[], cityPower[];
 	private JTextField instructionText;	// Displays messages informing what's happened and what to do next
+	private ArrayList<Integer> excludedRegions;
+	
 	Random random = new Random();
+
+	private class MyPanel extends JPanel {
+		private static final long serialVersionUID = 88L;
+		
+		@Override
+	    protected void paintComponent(Graphics g) {
+	        super.paintComponent(g);
+	        Graphics2D g2d = (Graphics2D) g;
+	        g2d.setColor(Color.pink);
+//	        g2d.setRenderingHint(
+//	            RenderingHints.KEY_ANTIALIASING,
+//	            RenderingHints.VALUE_ANTIALIAS_ON);
+//	        g2d.setStroke(new BasicStroke(8,
+	    	        g2d.setStroke(new BasicStroke(1,
+	            BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL));
+	        for (int i = 0; i < connectors.size(); i++) {
+	        	connectors.get(i).drawConnection(g);
+	        }
+		}
+	}
 
 	
 	public MainWindow() {
-		JPanel panel = new JPanel();
+		
+		JPanel panel = new MyPanel();
 
 		gameFrame = new JFrame();
 //		gameFrame = GameFrame;
@@ -90,6 +111,8 @@ public class MainWindow {
 		setupDeck();
 		
 	    // Add the UI components here
+		excludedRegions = new ArrayList<Integer>();
+		determineExcludedRegions(EXCL_REGN_CNT);		
 	    cities = new City[CITY_COUNT];
 	    setupMap();
 	    
@@ -136,7 +159,11 @@ public class MainWindow {
     }
     
     public JPanel getPanel() {
-    	return panel;
+    	return (JPanel) cp;
+    }
+    
+    public ArrayList<Integer> getExcludedRegions() {
+    	return excludedRegions;
     }
     
 	private void setupDeck() {
@@ -344,6 +371,7 @@ public class MainWindow {
 		lblStep.setEditable(false);
 	    c.gridx = 0;
 	    c.gridy = 0;
+	    c.gridwidth = 1;
 	    cp.add(lblStep, c);		
 	    stepNo = new JTextField(step + "");
 	    stepNo.setEditable(false);
@@ -391,152 +419,183 @@ public class MainWindow {
 	    cp.add(instructionText, c);
 	}
 	
+	private void determineExcludedRegions(int ExcludeCount) {
+		int possRegion;
+
+		for (int i = 0; i < ExcludeCount; i++) {
+			boolean unique = false;
+			possRegion = random.nextInt(6) + 1;
+			if (excludedRegions.size() == 0) {
+				excludedRegions.add(possRegion);
+				unique = true;
+			} else {
+				while (!unique) {
+					for (int j = 0; j < excludedRegions.size(); j++) {
+						if (excludedRegions.get(j) == possRegion) {
+							// Found a match on the excluded list, so the possible region to exclude is not unique
+							break;
+						}
+					}
+					// If it made it thru the for loop without a match, it is unique, so add it
+					if (unique) {
+						excludedRegions.add(possRegion);
+						unique = true;
+					}
+					possRegion = random.nextInt(6) + 1;
+				}
+			}
+		}
+	}
+	
 	private void setupMap() {
 		connectors = new ArrayList<CityConnector>();
-	    cities[0] = new City("Seattle", 0, 0, cp, this);
-	    cities[1] = new City("Portland", 0, 1, cp, this);
-	    cities[2] = new City("San Fran", 0, 2, cp, this);
-	    cities[3] = new City("LA", 0, 3, cp, this);
-	    cities[4] = new City("Las Vegas", 0, 4, cp, this);
-	    cities[5] = new City("San Diego", 0, 5, cp, this);
+	    cities[0] = new City("Seattle", 2, 3, cp, this, 1);
+	    cities[1] = new City("Portland", 1, 6, cp, this, 1);
+	    cities[2] = new City("San Fran", 1, 19, cp, this, 2);
+	    cities[3] = new City("LA", 3, 23, cp, this, 2);
+	    cities[4] = new City("Las Vegas", 6, 20, cp, this, 2);
+	    cities[5] = new City("San Diego", 4, 26, cp, this, 2);
+
 	    
-	    cities[6] = new City("Billings", 1, 0, cp, this);
-	    cities[7] = new City("Boise", 1, 1, cp, this);
-	    cities[8] = new City("Denver", 1, 2, cp, this);
-	    cities[9] = new City("Salt Lake", 1, 3, cp, this);
-	    cities[10] = new City("Santa Fe", 1, 4, cp, this);
-	    cities[11] = new City("Phoenix", 1, 5, cp, this);
+	    cities[6] = new City("Billings", 10, 7, cp, this, 1);
+	    cities[7] = new City("Boise", 5, 9, cp, this, 1);
+	    cities[8] = new City("Denver", 11, 16, cp, this, 1);
+	    cities[9] = new City("Salt Lake", 8, 14, cp, this, 2);
+	    cities[10] = new City("Santa Fe", 10, 21, cp, this, 2);
+	    cities[11] = new City("Phoenix", 8, 24, cp, this, 2);
+
 	    
-	    cities[12] = new City("Fargo", 2, 0, cp, this);
-	    cities[13] = new City("Cheyenne", 2, 1, cp, this);
-	    cities[14] = new City("OK City", 2, 3, cp, this);
-	    cities[15] = new City("Dallas", 2, 4, cp, this);
-	    cities[16] = new City("Houston", 2, 5, cp, this);
+	    cities[12] = new City("Fargo", 14, 5, cp, this, 3);
+	    cities[13] = new City("Cheyenne", 12, 12, cp, this, 1);
+	    cities[14] = new City("OK City", 14, 22, cp, this, 4);
+	    cities[15] = new City("Dallas", 15, 26, cp, this, 4);
+	    cities[16] = new City("Houston", 15, 29, cp, this, 4);
+
 	    
-	    cities[17] = new City("Duluth", 3, 0, cp, this);
-	    cities[18] = new City("Omaha", 3, 1, cp, this);
-	    cities[19] = new City("Kansas City", 3, 2, cp, this);
-	    cities[20] = new City("Memphis", 3, 4, cp, this);
+	    cities[17] = new City("Duluth", 18, 4, cp, this, 3);
+	    cities[18] = new City("Omaha", 15, 13, cp, this, 1);
+	    cities[19] = new City("Kansas City", 16, 18, cp, this, 4);
+	    cities[20] = new City("Memphis", 20, 22, cp, this, 4);
 
-	    cities[21] = new City("Minneapolis", 4, 1, cp, this);
-	    cities[22] = new City("Chicago", 4, 2, cp, this);
-	    cities[23] = new City("St Louis", 4, 3, cp, this);
-	    cities[24] = new City("Birmingham", 4, 4, cp, this);
-	    cities[25] = new City("New Orleans", 4, 5, cp, this);
 
-	    cities[26] = new City("Detroit", 5, 1, cp, this);
-	    cities[27] = new City("Cincinnati", 5, 2, cp, this);
-	    cities[28] = new City("Knoxville", 5, 3, cp, this);
-//	    cities[35] = new City("Atlanta", 5, 4, cp, this);
-//	    cities[36] = new City("Tampa", 5, 5, cp, this);
+	    cities[21] = new City("Minneapolis", 17, 8, cp, this, 3);
+	    cities[22] = new City("Chicago", 20, 12, cp, this, 3);
+	    cities[23] = new City("St Louis", 20, 18, cp, this, 3);
+	    cities[24] = new City("Birmingham", 21, 25, cp, this, 4);
+	    cities[25] = new City("New Orleans", 20, 28, cp, this, 4);
 
-	    cities[29] = new City("Buffalo", 6, 0, cp, this);
-	    cities[30] = new City("Pittsburgh", 6, 3, cp, this);		// Should be 6, 1
-	    cities[31] = new City("Washington", 6, 5, cp, this);		// Should be 6, 2
-//	    cities[37] = new City("Raleigh", 6, 3, cp, this);
-//	    cities[38] = new City("Jacksonville", 6, 4, cp, this);
+	    cities[26] = new City("Detroit", 24, 10, cp, this, 5);
+	    cities[27] = new City("Cincinnati", 24, 17, cp, this, 3);
+	    cities[28] = new City("Knoxville", 24, 21, cp, this, 3);
+	    cities[35] = new City("Atlanta", 25, 25, cp, this, 6);
+	    cities[36] = new City("Tampa", 25, 31, cp, this, 6);
 
-	    cities[32] = new City("Boston", 6, 1, cp, this);			// Should be 7, 0
-	    cities[33] = new City("New York", 6, 2, cp, this);			// Should be 7, 1
-	    cities[34] = new City("Philadelphia", 6, 4, cp, this);		// Should be 7, 2
-//	    cities[39] = new City("Norfolk", 7, 3, cp, this);
-//	    cities[40] = new City("Savannah", 7, 4, cp, this);
-//	    cities[41] = new City("Miami", 7, 5, cp, this);
+	    cities[29] = new City("Buffalo", 29, 9, cp, this, 5);
+	    cities[30] = new City("Pittsburgh", 28, 15, cp, this, 5);		// Should be 6, 1
+	    cities[31] = new City("Washington", 34, 18, cp, this, 5);		// Should be 6, 2
+	    cities[37] = new City("Raleigh", 32, 24, cp, this, 6);
+	    cities[38] = new City("Jacksonville", 29, 29, cp, this, 6);
 
-	    // Obviously I need to read this crap from a file so we can have different maps
-	    connectors.add(new CityConnector(5, 2, cities[0], cities[6], 9, cp));		// Seattle to Billings
-	    connectors.add(new CityConnector(5, 5, cities[0], cities[7], 12, cp));		// Seattle to Boise
-	    connectors.add(new CityConnector(2, 5, cities[0], cities[1], 3, cp));		// Seattle to Portland
-	    connectors.add(new CityConnector(5, 7, cities[1], cities[7], 13, cp));		// Portland to Boise
-	    connectors.add(new CityConnector(2, 10, cities[1], cities[2], 24, cp));		// Portland to San Fran
-	    connectors.add(new CityConnector(5, 8, cities[2], cities[7], 23, cp));		// San Fran to Boise
-	    connectors.add(new CityConnector(5, 15, cities[2], cities[9], 27, cp));		// San Fran to Salt Lake
-	    connectors.add(new CityConnector(0, 16, cities[2], cities[4], 14, cp));		// San Fran to Las Vegas
-	    connectors.add(new CityConnector(2, 15, cities[2], cities[3], 9, cp));		// San Fran to Los Angeles
-	    connectors.add(new CityConnector(2, 20, cities[3], cities[4], 9, cp));		// Los Angeles to Las Vegas
-	    connectors.add(new CityConnector(0, 21, cities[3], cities[5], 3, cp));		// Los Angeles to San Diego
-	    connectors.add(new CityConnector(5, 18, cities[4], cities[9], 18, cp));		// Las Vegas to Salt Lake
-	    connectors.add(new CityConnector(5, 22, cities[4], cities[10], 27, cp));	// Las Vegas to Santa Fe
-	    connectors.add(new CityConnector(5, 25, cities[4], cities[11], 15, cp));	// Las Vegas to Phoenix
-	    connectors.add(new CityConnector(2, 25, cities[4], cities[5], 9, cp));		// Las Vegas to San Diego
-	    connectors.add(new CityConnector(5, 27, cities[5], cities[11], 14, cp));	// San Diego to Phoenix
-	    
-	    connectors.add(new CityConnector(10, 2, cities[6], cities[12], 17, cp));		// Billings to Fargo
-	    connectors.add(new CityConnector(9, 3, cities[6], cities[21], 18, cp));		// Billings to Minneapolis
-	    connectors.add(new CityConnector(10, 5, cities[6], cities[13], 9, cp));		// Billings to Cheyenne
-	    connectors.add(new CityConnector(7, 5, cities[6], cities[7], 12, cp));		// Billings to Boise
-	    connectors.add(new CityConnector(10, 7, cities[7], cities[13], 24, cp));	// Boise to Cheyenne
-	    connectors.add(new CityConnector(5, 11, cities[7], cities[9], 8, cp));		// Boise to Salt Lake
-	    connectors.add(new CityConnector(10, 8, cities[8], cities[13], 0, cp));		// Denver to Cheyenne
-	    connectors.add(new CityConnector(11, 12, cities[8], cities[19], 16, cp));	// Denver to Kansas City
-	    connectors.add(new CityConnector(5, 16, cities[8], cities[10], 13, cp));	// Denver to Santa Fe
-	    connectors.add(new CityConnector(7, 15, cities[8], cities[9], 21, cp));		// Denver to Salt Lake
-	    connectors.add(new CityConnector(7, 20, cities[9], cities[10], 28, cp));	// Salt Lake to Santa Fe
-	    connectors.add(new CityConnector(7, 25, cities[10], cities[11], 18, cp));	// Santa Fe to Phoenix
-	    connectors.add(new CityConnector(9, 20, cities[10], cities[19], 16, cp));	// Santa Fe to Kansas City
-	    connectors.add(new CityConnector(10, 18, cities[10], cities[14], 15, cp));	// Santa Fe to OK City
-	    connectors.add(new CityConnector(10, 22, cities[10], cities[15], 16, cp));	// Santa Fe to Dallas
-	    connectors.add(new CityConnector(10, 25, cities[10], cities[16], 21, cp));	// Santa Fe to Houston
-
-	    connectors.add(new CityConnector(15, 2, cities[12], cities[17], 6, cp));	// Fargo to Duluth
-	    connectors.add(new CityConnector(14, 3, cities[12], cities[21], 6, cp));	// Fargo to Minneapolis
-	    connectors.add(new CityConnector(14, 5, cities[13], cities[21], 18, cp));	// Cheyenne to Minneapolis
-	    connectors.add(new CityConnector(15, 7, cities[13], cities[18], 14, cp));	// Cheyenne to Omaha
-	    connectors.add(new CityConnector(15, 14, cities[14], cities[19], 8, cp));	// OK City to Kansas City
-	    connectors.add(new CityConnector(15, 20, cities[14], cities[20], 14, cp));	// OK City to Memphis
-	    connectors.add(new CityConnector(12, 20, cities[14], cities[15], 3, cp));	// OK City to Dallas
-	    connectors.add(new CityConnector(15, 22, cities[15], cities[20], 12, cp));	// Dallas to Memphis
-	    connectors.add(new CityConnector(14, 24, cities[15], cities[25], 12, cp));	// Dallas to New Orleans
-	    connectors.add(new CityConnector(12, 25, cities[15], cities[16], 5, cp));	// Dallas to Houston
-	    connectors.add(new CityConnector(16, 27, cities[16], cities[25], 8, cp));	// Houston to New Orleans
-
-	    connectors.add(new CityConnector(19, 3, cities[17], cities[26], 15, cp));	// Duluth to Detroit
-	    connectors.add(new CityConnector(19, 4, cities[17], cities[22], 12, cp));	// Duluth to Chicago
-	    connectors.add(new CityConnector(20, 5, cities[17], cities[21], 5, cp));	// Duluth to Minneapolis
-	    connectors.add(new CityConnector(20, 7, cities[18], cities[21], 8, cp));	// Omaha to Minneapolis
-	    connectors.add(new CityConnector(20, 10, cities[18], cities[22], 13, cp));	// Omaha to Chicago
-	    connectors.add(new CityConnector(17, 10, cities[18], cities[19], 5, cp));	// Omaha to Kansas City
-	    connectors.add(new CityConnector(20, 12, cities[19], cities[22], 8, cp));	// Kansas City to Chicago
-	    connectors.add(new CityConnector(20, 15, cities[19], cities[23], 6, cp));	// Kansas City to St. Louis
-	    connectors.add(new CityConnector(17, 20, cities[19], cities[20], 12, cp));	// Kansas City to Memphis
-	    connectors.add(new CityConnector(20, 18, cities[20], cities[23], 7, cp));	// Memphis to St. Louis
-	    connectors.add(new CityConnector(20, 22, cities[20], cities[24], 6, cp));	// Memphis to Birmingham
-	    connectors.add(new CityConnector(20, 25, cities[20], cities[25], 7, cp));	// Memphis to New Orleans
-
-	    connectors.add(new CityConnector(22, 10, cities[21], cities[22], 8, cp));	// Minneapolis to Chicago
-	    connectors.add(new CityConnector(25, 8, cities[22], cities[26], 7, cp));	// Chicago to Detroit
-	    connectors.add(new CityConnector(25, 12, cities[22], cities[27], 7, cp));	// Chicago to Cincinnati
-	    connectors.add(new CityConnector(22, 15, cities[22], cities[23], 10, cp));	// Chicago to St. Louis
-	    connectors.add(new CityConnector(25, 14, cities[23], cities[27], 12, cp));	// St. Louis to Cincinnati
-//	    connectors.add(new CityConnector(0, 0, cities[23], cities[35], 12, cp));	// St. Louis to Atlanta
-//	    connectors.add(new CityConnector(0, 0, cities[24], cities[35], 3, cp));		// Birmingham to Atlanta
-//	    connectors.add(new CityConnector(0, 0, cities[24], cities[38], 9, cp));		// Birmingham to Jacksonville
-	    connectors.add(new CityConnector(22, 25, cities[24], cities[25], 11, cp));	// Birmingham to New Orleans
-//	    connectors.add(new CityConnector(0, 0, cities[25], cities[38], 16, cp));	// New Orleans to Jacksonville
-	    connectors.add(new CityConnector(30, 3, cities[26], cities[29], 7, cp));	// Detroit to Buffalo
-	    connectors.add(new CityConnector(29, 8, cities[26], cities[30], 6, cp));	// Detroit to Pittsburgh
-	    connectors.add(new CityConnector(27, 10, cities[27], cities[26], 4, cp));	// Cincinnati to Detroit
-	    connectors.add(new CityConnector(30, 15, cities[27], cities[30], 7, cp));	// Cincinnati to Pittsburgh
-//	    connectors.add(new CityConnector(0, 0, cities[27], cities[37], 15, cp));	// Cincinnati to Raleigh
-	    connectors.add(new CityConnector(27, 15, cities[27], cities[28], 6, cp));	// Cincinnati to Knoxville
-//	    connectors.add(new CityConnector(0, 0, cities[28], cities[35], 5, cp));		// Knoxville to Atlanta
-//	    connectors.add(new CityConnector(0, 0, cities[35], cities[37], 7, cp));		// Atlanta to Raleigh
-//	    connectors.add(new CityConnector(0, 0, cities[35], cities[40], 7, cp));		// Atlanta to Savannah
-//	    connectors.add(new CityConnector(0, 0, cities[36], cities[38], 16, cp));	// Tampa to Jacksonville
-//	    connectors.add(new CityConnector(0, 0, cities[36], cities[41], 16, cp));	// Tampa to Miami
-
-	    connectors.add(new CityConnector(30, 6, cities[29], cities[30], 7, cp));	// Buffalo to Pittsburgh
-	    connectors.add(new CityConnector(30, 5, cities[29], cities[33], 8, cp));	// Buffalo to New York
-	    connectors.add(new CityConnector(30, 21, cities[30], cities[31], 6, cp));	// Pittsburgh to Washington
-//	    connectors.add(new CityConnector(0, 0, cities[30], cities[37], 7, cp));		// Pittsburgh to Raleigh
-	    connectors.add(new CityConnector(32, 25, cities[31], cities[34], 3, cp));	// Washington to Philadelphia
-//	    connectors.add(new CityConnector(0, 0, cities[31], cities[39], 5, cp));		// Washington to Norfolk
-//	    connectors.add(new CityConnector(0, 0, cities[37], cities[39], 3, cp));		// Raleigh to Norfolk
-//	    connectors.add(new CityConnector(0, 0, cities[37], cities[40], 7, cp));		// Raleigh to Savannah
-//	    connectors.add(new CityConnector(0, 0, cities[38], cities[40], 0, cp));		// Jacksonville to Savannah
-
-	    connectors.add(new CityConnector(32, 10, cities[32], cities[33], 3, cp));	// Boston to New York
-	    connectors.add(new CityConnector(30, 16, cities[33], cities[34], 0, cp));	// New York to Philadelphia
+	    cities[32] = new City("Boston", 35, 9, cp, this, 5);			// Should be 7, 0
+	    cities[33] = new City("New York", 34, 12, cp, this, 5);			// Should be 7, 1
+	    cities[34] = new City("Philadelphia", 33, 15, cp, this, 5);		// Should be 7, 2
+	    cities[39] = new City("Norfolk", 33, 21, cp, this, 6);
+	    cities[40] = new City("Savannah", 29, 26, cp, this, 6);
+	    cities[41] = new City("Miami", 28, 33, cp, this, 6);
+		
+		// Obviously I need to read this crap from a file so we can have different maps 
+	    connectors.add(new CityConnector(cities[0], cities[6], 9, cp)); 		//Seattle to Billings 
+		connectors.add(new CityConnector(cities[0], cities[7], 12, cp));		// Seattle to Boise 
+		connectors.add(new CityConnector(cities[0], cities[1], 3, cp));		// Seattle to Portland 
+		connectors.add(new CityConnector(cities[1], cities[7], 13, cp)); 		// Portland to Boise
+		connectors.add(new CityConnector(cities[1], cities[2], 24, cp)); 	// Portland to San Fran 
+		connectors.add(new CityConnector(cities[2], cities[7], 23, cp));		// San Fran to Boise
+		connectors.add(new CityConnector(cities[2], cities[9], 27, cp));		// San Fran to Salt Lake
+		connectors.add(new CityConnector(cities[2], cities[4], 14, cp));		// San Fran to Las Vegas 
+		connectors.add(new CityConnector(cities[2], cities[3], 9, cp));		// San Fran to Los Angeles 
+		connectors.add(new CityConnector(cities[3], cities[4], 9, cp));		// Los Angeles to Las Vegas 
+		connectors.add(new CityConnector(cities[3], cities[5], 3, cp));	  	// Los Angeles to San Diego 
+		connectors.add(new CityConnector(cities[4], cities[9], 18, cp));		// Las Vegas to Salt Lake 
+		connectors.add(new CityConnector(cities[4], cities[10], 27, cp)); 	// Las Vegas to Santa Fe 
+		connectors.add(new CityConnector(cities[4], cities[11], 15, cp)); 	// Las Vegas to Phoenix 
+		connectors.add(new CityConnector(cities[4], cities[5], 9, cp)); 		// Las Vegas to San Diego 
+		connectors.add(new CityConnector(cities[5], cities[11], 14, cp));	// San Diego to Phoenix
+		connectors.add(new CityConnector(cities[6], cities[12], 17, cp)); 	// Billings to Fargo 
+		connectors.add(new CityConnector(cities[6], cities[21], 18, cp)); 	// Billings to Minneapolis 
+		connectors.add(new CityConnector(cities[6], cities[13], 9, cp)); 	// Billings to Cheyenne
+		connectors.add(new CityConnector(cities[6], cities[7], 12, cp)); 		// Billings to Boise 
+		connectors.add(new CityConnector(cities[7], cities[13], 24, cp)); 	// Boise to Cheyenne 
+		connectors.add(new CityConnector(cities[7], cities[9], 8, cp)); 		// Boise to Salt Lake
+		connectors.add(new CityConnector(cities[8], cities[13], 0, cp)); 	// Denver to Cheyenne 
+		connectors.add(new CityConnector(cities[8], cities[19], 16, cp)); 	// Denver to Kansas City 
+		connectors.add(new CityConnector(cities[8], cities[10], 13, cp)); 	// Denver to Santa Fe
+		connectors.add(new CityConnector(cities[8], cities[9], 21, cp)); 	// Denver to Salt Lake 
+		connectors.add(new CityConnector(cities[9], cities[10], 28, cp)); 	// Salt Lake to Santa Fe 
+		connectors.add(new CityConnector(cities[10], cities[11], 18, cp)); 	// Santa Fe to Phoenix
+		connectors.add(new CityConnector(cities[10], cities[19], 16, cp)); 	// Santa Fe to Kansas City 
+		connectors.add(new CityConnector(cities[10], cities[14], 15, cp)); 	// Santa Fe to OK City 
+		connectors.add(new CityConnector(cities[10], cities[15], 16, cp)); 	// Santa Fe to Dallas
+		connectors.add(new CityConnector(cities[10], cities[16], 21, cp)); 	// Santa Fe to Houston
+		  
+		connectors.add(new CityConnector(cities[12], cities[17], 6, cp)); 	// Fargo to Duluth 
+		connectors.add(new CityConnector(cities[12], cities[21], 6, cp)); 	// Fargo to Minneapolis 
+		connectors.add(new CityConnector(cities[13], cities[21], 18, cp)); 	// Cheyenne to Minneapolis 
+		connectors.add(new CityConnector(cities[13], cities[18], 14, cp)); 	// Cheyenne to Omaha
+		connectors.add(new CityConnector(cities[14], cities[19], 8, cp));	// OK City to Kansas City
+		connectors.add(new CityConnector(cities[14], cities[20], 14, cp));	// OK City to Memphis
+		connectors.add(new CityConnector(cities[14], cities[15], 3, cp)); 	// OK City to Dallas
+		connectors.add(new CityConnector(cities[15], cities[20], 12, cp));	// Dallas to Memphis
+		connectors.add(new CityConnector(cities[15], cities[25], 12, cp));	// Dallas to New Orleans
+		connectors.add(new CityConnector(cities[15], cities[16], 5, cp));	// Dallas to Houston
+		connectors.add(new CityConnector(cities[16], cities[25], 8, cp));	// Houston to New Orleans
+		  
+		connectors.add(new CityConnector(cities[17], cities[26], 15, cp));	// Duluth to Detroit
+		connectors.add(new CityConnector(cities[17], cities[22], 12, cp));	// Duluth to Chicago
+		connectors.add(new CityConnector(cities[17], cities[21], 5, cp));	// Duluth to Minneapolis
+		connectors.add(new CityConnector(cities[18], cities[21], 8, cp));	// Omaha to Minneapolis
+		connectors.add(new CityConnector(cities[18], cities[22], 13, cp));	// Omaha to Chicago
+		connectors.add(new CityConnector(cities[18], cities[19], 5, cp));	// Omaha to Kansas City
+		connectors.add(new CityConnector(cities[19], cities[22], 8, cp));	// Kansas City to Chicago
+		connectors.add(new CityConnector(cities[19], cities[23], 6, cp));	// Kansas City to St. Louis
+		connectors.add(new CityConnector(cities[19], cities[20], 12, cp));	// Kansas City to Memphis
+		connectors.add(new CityConnector(cities[20], cities[23], 7, cp));	// Memphis to St. Louis
+		connectors.add(new CityConnector(cities[20], cities[24], 6, cp));	// Memphis to Birmingham
+		connectors.add(new CityConnector(cities[20], cities[25], 7, cp));	// Memphis to New Orleans
+		  
+		connectors.add(new CityConnector(cities[21], cities[22], 8, cp));	// Minneapolis to Chicago
+		connectors.add(new CityConnector(cities[22], cities[26], 7, cp));	// Chicago to Detroit
+		connectors.add(new CityConnector(cities[22], cities[27], 7, cp));	// Chicago to Cincinnati
+		connectors.add(new CityConnector(cities[22], cities[23], 10, cp));	// Chicago to St. Louis
+		connectors.add(new CityConnector(cities[23], cities[27], 12, cp));	// St. Louis to Cincinnati
+		connectors.add(new CityConnector(cities[23], cities[35], 12, cp));	// St. Louis to Atlanta
+		connectors.add(new CityConnector(cities[24], cities[35], 3, cp));	// Birmingham to Atlanta
+		connectors.add(new CityConnector(cities[24], cities[38], 9, cp));	// Birmingham to Jacksonville
+		connectors.add(new CityConnector(cities[24], cities[25], 11, cp));	// Birmingham to New Orleans
+		connectors.add(new CityConnector(cities[25], cities[38], 16, cp));	// New Orleans to Jacksonville
+		connectors.add(new CityConnector(cities[26], cities[29], 7, cp));	// Detroit to Buffalo
+		connectors.add(new CityConnector(cities[26], cities[30], 6, cp));	// Detroit to Pittsburgh
+		connectors.add(new CityConnector(cities[27], cities[26], 4, cp));	// Cincinnati to Detroit
+		connectors.add(new CityConnector(cities[27], cities[30], 7, cp));	// Cincinnati to Pittsburgh
+		connectors.add(new CityConnector(cities[27], cities[37], 15, cp));	// Cincinnati to Raleigh
+		connectors.add(new CityConnector(cities[27], cities[28], 6, cp));	// Cincinnati to Knoxville
+		connectors.add(new CityConnector(cities[28], cities[35], 5, cp));	// Knoxville to Atlanta
+		connectors.add(new CityConnector(cities[35], cities[37], 7, cp));	// Atlanta to Raleigh
+		connectors.add(new CityConnector(cities[35], cities[40], 7, cp));	// Atlanta to Savannah
+		connectors.add(new CityConnector(cities[36], cities[38], 16, cp));	// Tampa to Jacksonville
+		connectors.add(new CityConnector(cities[36], cities[41], 16, cp));	// Tampa to Miami
+		  
+		connectors.add(new CityConnector(cities[29], cities[30], 7, cp));	// Buffalo to Pittsburgh
+		connectors.add(new CityConnector(cities[29], cities[33], 8, cp));	// Buffalo to New York
+		connectors.add(new CityConnector(cities[30], cities[31], 6, cp));	// Pittsburgh to Washington
+		connectors.add(new CityConnector(cities[30], cities[37], 7, cp));	// Pittsburgh to Raleigh
+		connectors.add(new CityConnector(cities[31], cities[34], 3, cp));	// Washington to Philadelphia
+		connectors.add(new CityConnector(cities[31], cities[39], 5, cp));	// Washington to Norfolk
+		connectors.add(new CityConnector(cities[37], cities[39], 3, cp));	// Raleigh to Norfolk
+		connectors.add(new CityConnector(cities[37], cities[40], 7, cp));	// Raleigh to Savannah
+		connectors.add(new CityConnector(cities[38], cities[40], 0, cp));	// Jacksonville to Savannah
+		  
+		connectors.add(new CityConnector(cities[32], cities[33], 3, cp));	// Boston to New York
+		connectors.add(new CityConnector(cities[33], cities[34], 0, cp));	// New York to Philadelphia
 	}
 
 	

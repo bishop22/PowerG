@@ -5,14 +5,19 @@ import java.util.ArrayList;
 
 public class City {
 
+	static final int BTN_WIDTH = 45;
+	static final int BTN_HEIGHT = 25;
+	
 	private GridBagConstraints c;
 	private String cityName;
+	private int region;
 	private JButton[] gridLoc;
 	private JTextField nameLoc;
 	private ArrayList<City> connections;
 	private ArrayList<Integer> connectionCosts;
 	private MainWindow gameControl;
 	private Container pane;
+	private int actualX, actualY;
 	
 	// Create a generic ActionListener for now; later it will have to figure out what color to label the space
 	ActionListener listener = new ActionListener() {
@@ -80,15 +85,20 @@ public class City {
     };
     
     // Constructor for a new city
-	public City(String CityName, int MapX, int MapY, Container Pane, MainWindow GameControl) {
+	public City(String CityName, int MapX, int MapY, Container Pane, MainWindow GameControl, int Region) {
 		// Set up a GridBagConstraints object for the city components to use to be plotted correctly
 		c = new GridBagConstraints();
 		c.fill = GridBagConstraints.HORIZONTAL;
+	    c.gridwidth = 1;
+	    c.gridheight = 1;
 		
 		// Set the passed member variables
 		cityName = CityName;
-		pane = Pane;
+		actualX = MapX;
+		actualY = MapY;
 		gameControl = GameControl;
+		pane = gameControl.getPanel();
+		region = Region;
 		
 		connections = new ArrayList<City>();
 		connectionCosts = new ArrayList<Integer>();
@@ -105,48 +115,44 @@ public class City {
 		
 		// Set the preferred button sizes
 		for (int i = 0; i < 3; i++) {
-//			gridLoc[i].setPreferredSize(new Dimension(30, 30));
+			gridLoc[i].setPreferredSize(new Dimension(BTN_WIDTH, BTN_HEIGHT));
 			gridLoc[i].setFont(new Font("Arial", Font.PLAIN, 10));
 		}
 
 		// Determine where to place the 10 electro button
-		c.gridx = 5*MapX + 1;
-	    c.gridy = 5*MapY + 1;
-	    Pane.add(gridLoc[0], c);
+		c.gridx = MapX;
+	    c.gridy = MapY;
+	    pane.add(gridLoc[0], c);
 		
 		// Determine where to place the 15 electro button
-		c.gridx = 5*MapX + 2;
-	    c.gridy = 5*MapY + 1;
-	    Pane.add(gridLoc[1], c);
+		c.gridx = MapX + 1;
+	    c.gridy = MapY;
+	    pane.add(gridLoc[1], c);
 
 		// Determine where to place the 20 electro button
-		c.gridx = 5*MapX + 3;
-	    c.gridy = 5*MapY + 1;
-	    Pane.add(gridLoc[2], c);
+		c.gridx = MapX + 2;
+	    c.gridy = MapY;
+	    pane.add(gridLoc[2], c);
 
 	    // Build and place the city name
 	    nameLoc = new JTextField(CityName);
 	    nameLoc.setEditable(false);
 		nameLoc.setToolTipText(CityName);
-	    c.gridx = 5*MapX + 1;
-	    c.gridy = 5*MapY + 2;
+		nameLoc.setHorizontalAlignment(JTextField.CENTER);
+	    c.gridx = MapX;
+	    c.gridy = MapY + 1;
 	    c.gridwidth = 3;
-	    Pane.add(nameLoc, c);
+	    pane.add(nameLoc, c);
 	    
-	    // Create a couple of buffers so that cities are spaced horizontally and vertically
-	    c.gridwidth = 1;	// Set the gridwidth back to 1
-	    JLabel buffer1 = new JLabel("    ");
-	    c.gridx = 5*MapX + 0;
-	    c.gridy = 5*MapY + 0;
-	    Pane.add(buffer1, c);
-	    JLabel buffer2 = new JLabel("    ");
-	    c.gridx = 5*MapX + 4;
-	    c.gridy = 5*MapY + 4;
-	    Pane.add(buffer2, c);
-
-	    // Set up ActionListeners for each button
-		for (int i = 0; i <= 2; i++) {
-	        gridLoc[i].addActionListener(listener);
+		// Only add listeners if the city is active
+		if (isActive()) {
+		    // Set up ActionListeners for each button
+			for (int i = 0; i <= 2; i++) {
+		        gridLoc[i].addActionListener(listener);
+			}
+		} else {
+			// Also disable the 10 button
+			gridLoc[0].setEnabled(false);
 		}
 	}
 	
@@ -163,6 +169,16 @@ public class City {
 	}
 	
 	// public access methods
+	public boolean isActive() {
+		boolean retVal = true;
+		for (int i = 0; i < gameControl.getExcludedRegions().size(); i++) {
+			if (gameControl.getExcludedRegions().get(i) == region) {
+				// If we find this city's region in the exlusion list, the city is not active
+				retVal = false;
+			}
+		}
+		return retVal;
+	}
 	public String getName() {
 		return cityName;
 	}
@@ -172,6 +188,12 @@ public class City {
 	public int getY() {
 		return nameLoc.getY();
 	}
+	public int getActualX() {
+		return actualX;
+	}
+	public int getActualY() {
+		return actualY;
+	}
 	public ArrayList<City> getConnections() {
 		return connections;
 	}
@@ -179,7 +201,10 @@ public class City {
 		return connectionCosts;
 	}
 	public void enableButton(int ButtonNo) {
-		gridLoc[ButtonNo].setEnabled(true);
+		// Only enable buttons if the city is active
+		if (isActive()) {
+			gridLoc[ButtonNo].setEnabled(true);
+		}
 	}
 	public JButton getButton(int ButtonNo) {
 		return gridLoc[ButtonNo];
